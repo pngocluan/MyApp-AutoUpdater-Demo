@@ -1,0 +1,49 @@
+using System;
+using System.Net;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+
+class Program
+{
+    static async Task Main()
+    {
+        string currentVersion = "1.0.0";
+        string versionUrl = "https://www.dropbox.com/scl/fi/h8sifu5ibup4n73njmkor/version.txt";
+        string downloadUrl = "https://www.dropbox.com/scl/fi/256k4nz9v0ut8lwodalzd/MyApp_1.0.2.exe";
+        string tempFile = Path.Combine(Path.GetTempPath(), "MyApp_New.exe");
+
+        try
+        {
+            using (var client = new WebClient())
+            {
+                string latestVersion = (await client.DownloadStringTaskAsync(versionUrl)).Trim();
+
+                if (new Version(latestVersion).CompareTo(new Version(currentVersion)) > 0)
+                {
+                    Console.WriteLine($"🔔 Có bản cập nhật mới: {latestVersion}");
+                    Console.WriteLine("⬇️ Đang tải bản mới...");
+
+                    await client.DownloadFileTaskAsync(downloadUrl, tempFile);
+
+                    Console.WriteLine("✅ Tải xong! Đang khởi chạy phiên bản mới...");
+
+                    Process.Start(new ProcessStartInfo(tempFile)
+                    {
+                        UseShellExecute = true
+                    });
+
+                    Environment.Exit(0); // Đóng ứng dụng hiện tại
+                }
+                else
+                {
+                    Console.WriteLine("✅ Bạn đang dùng phiên bản mới nhất.");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("❌ Lỗi khi kiểm tra cập nhật: " + ex.Message);
+        }
+    }
+}
